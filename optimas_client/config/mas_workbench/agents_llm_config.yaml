@@ -1,0 +1,22 @@
+agents:
+  worker:
+    llm_config:
+      model_name: "gpt-4o"
+      max_retries: 10
+      read_timeout: 900
+
+    internal_tools_llm_config:
+      model_name: "gpt-4o"
+      max_retries: 3
+      read_timeout: 900
+    
+    vlm_config:
+      model_name: "gpt-4o"
+      max_retries: 3
+
+    text_qa_chunk_chars: 20000
+
+    context_soft_limit_chars: 240000
+    context_hard_limit_chars: 250000
+    context_must_limit_chars: 260000
+    max_tool_result_chars_for_context: 20000

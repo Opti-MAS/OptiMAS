@@ -1,0 +1,65 @@
+# OptiMAS MCP Server Configuration
+
+# Server settings
+server:
+  host: "127.0.0.1"
+  port: 8188
+  debug: false
+
+# Authentication settings
+auth:
+  # API Keys (list of valid API keys)
+  # Generate a key: python -c "import secrets; print(secrets.token_urlsafe(32))"
+  # CHANGE THIS before exposing the server beyond localhost.
+  api_keys:
+    - "optimas-local-dev-key"
+
+# Session settings
+session:
+  # Session timeout in seconds (default: 5 hours)
+  timeout_seconds: 18000
+  # Cleanup interval in seconds (default: 5 minutes)
+  cleanup_interval: 300
+  # Maximum number of sessions (0 = unlimited)
+  max_sessions: 0
+  # Secret key for generating session_id (HMAC key)
+  # Generate a secure key: python -c "import secrets; print(secrets.token_urlsafe(32))"
+  secret_key: "change-me-generate-with-python-c-import-secrets-print-secrets-token_urlsafe-32"
+
+# Dashboard settings
+dashboard:
+  # Serve the web dashboard and its /api/* routes.
+  enabled: true
+  # HTTP access requires an API key. Browsers use HTTP Basic auth:
+  # any username, with the MCP API key as password.
+  # Remote availability is opt-in; use TLS for remote deployments.
+  allow_remote: false
+
+# Logging settings
+logging:
+  # Log file path
+  log_file: "logs/mcp_server.log"
+  # Dedicated JSONL for MCP tool calls (dashboard history + stats; also mirrored under each session workspace as tool_call/tool_calls.jsonl)
+  tool_calls_log_file: "logs/mcp_server_tools.jsonl"
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  log_level: "INFO"
+  # Enable file logging
+  enable_file_logging: true
+  # Enable console logging
+  enable_console_logging: true
+
+# Workspace settings
+workspace:
+  # Root directory for session workspaces (resolved relative to this config file's directory).
+  # Each session will have its own subdirectory named by session_id.
+  path: "../workspace"
+  # List of paths to ignore in list_file_tree (matched by name)
+  # Default: ["_internal", ".gitkeep", ".gitignore"]
+  ignore_paths:
+    - "_internal"
+    - ".gitkeep"
+    - ".gitignore"
+  # If true, list_file_tree hides this session's own working_trajectory + tool_call at session
+  # root (and optimizer/... counterparts); per-query subdirs remain visible. See WorkspaceSettings.
+  # Prefer toggling via env: OPTIMAS_SERVER_HIDE_OWN_WORKING_TRAJECTORY_LIST=1
+  hide_own_working_trajectory_in_list: true

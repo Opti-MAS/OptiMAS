@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OptiMAS Server — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* =====================
+       Design System (GPT-ish)
+       ===================== */
+    :root {
+      --bg: #0b1020;              /* deep, inky */
+      --bg-elev: #0f172a;         /* slate-900 */
+      --panel: #121a33;           /* glass panel */
+      --panel-2: #0e1530;         /* darker panel */
+      --border: rgba(148, 163, 184, 0.18);
+      --text: #e6ebf5;
+      --muted: #93a4bf;
+      --primary: #7c9dff;         /* soft indigo */
+      --primary-strong: #4c6fff;  
+      --accent: #22c55e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --good: #22c55e;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 14px;
+      --sidebar-w: 288px;
+      --grid-gap: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 80% -10%, rgba(124,157,255,.10), transparent 60%),
+        radial-gradient(800px 600px at -10% 110%, rgba(34,197,94,.10), transparent 60%),
+        var(--bg);
+      letter-spacing: .01em;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: var(--panel-2); }
+    ::-webkit-scrollbar-thumb { 
+      background: linear-gradient(180deg, rgba(124,157,255,.4), rgba(124,157,255,.2));
+      border-radius: 10px;
+      transition: background 0.3s ease;
+    }
+    ::-webkit-scrollbar-thumb:hover { 
+      background: linear-gradient(180deg, rgba(124,157,255,.6), rgba(124,157,255,.4));
+    }
+
+    a { color: inherit; text-decoration: none; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    /* ===== App Shell ===== */
+    .app {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      min-height: 100dvh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: sticky; top: 0; height: 100dvh;
+      background: linear-gradient(180deg, rgba(18,26,51,.78), rgba(18,26,51,.58));
+      backdrop-filter: blur(12px);
+      border-right: 1px solid var(--border);
+      padding: 18px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+
+    .brand {
+      border: 1px solid var(--border);
+      background: radial-gradient(300px 120px at 20% -30%, rgba(124,157,255,.28), transparent 50%), var(--panel);
+      border-radius: calc(var(--radius) - 4px);
+      padding: 14px 14px 12px;
+      box-shadow: var(--shadow);
+    }
+    .brand h1 {
+      font-size: 18px; font-weight: 700; line-height: 1.2;
+      background: linear-gradient(135deg, #9cb3ff, #8ef0b4);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      margin: 0 0 4px 0;
+    }
+    .brand p { margin: 0; color: var(--muted); font-size: 12px; }
+
+    .nav { margin-top: 4px; display: grid; gap: 6px; }
+    .nav a {
+      display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 10px;
+      color: var(--muted);
+      border: 1px solid transparent;
+      transition: .2s ease; cursor: pointer;
+    }
+    .nav a:hover { background: rgba(156, 179, 255, .08); color: var(--text); border-color: var(--border); }
+    .nav a.active {
+      background: linear-gradient(180deg, rgba(124,157,255,.14), rgba(124,157,255,.04));
+      color: var(--text); border-color: rgba(124,157,255,.25);
+    }
+    .nav svg { width: 18px; height: 18px; opacity: .9; }
+
+    .sidebar-footer {
+      margin-top: auto; border-top: 1px dashed var(--border); padding-top: 12px;
+      display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px rgba(34,197,94,.15); animation: pulse 2.2s infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(.8)} }
+    @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes slideIn { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+
+    /* Topbar */
+    .topbar {
+      position: sticky; top: 0; z-index: 50;
+      display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px;
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(15,23,42,.75), rgba(15,23,42,.45));
+      backdrop-filter: blur(12px);
+    }
+    .kbd { font-size: 12px; border: 1px solid var(--border); padding: 2px 6px; border-radius: 6px; color: var(--muted); }
+
+    .search {
+      display: grid; grid-template-columns: 18px 1fr 20px; align-items: center; gap: 10px;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 10px; 
+      padding: 10px 12px;
+      transition: all 0.3s ease;
+    }
+    .search:focus-within {
+      border-color: rgba(124,157,255,.5);
+      box-shadow: 0 0 0 3px rgba(124,157,255,.1);
+    }
+    .search input {
+      background: transparent; border: 0; outline: none; color: var(--text);
+      font-size: 14px;
+    }
+    .search input::placeholder {
+      color: var(--muted);
+      opacity: 0.7;
+    }
+
+    .container { padding: 18px; }
+
+    /* Page header */
+    .page-header { 
+      display: grid; gap: 6px; margin-bottom: 18px;
+      animation: fadeIn 0.5s ease;
+    }
+    .title { 
+      font-size: 22px; font-weight: 700; letter-spacing: .01em;
+      background: linear-gradient(135deg, var(--text), var(--muted));
+      -webkit-background-clip: text; background-clip: text;
+    }
+    .desc { color: var(--muted); }
+
+    /* Cards */
+    .grid { display: grid; gap: var(--grid-gap); grid-template-columns: repeat(12, 1fr); }
+    .stat { 
+      grid-column: span 3; min-width: 220px; 
+      background: linear-gradient(180deg, rgba(124,157,255,.06), rgba(124,157,255,.02)); 
+      border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; 
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+      animation: fadeIn 0.5s ease;
+    }
+    .stat:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(124,157,255,.15);
+      border-color: rgba(124,157,255,.3);
+    }
+    .stat small { color: var(--muted); }
+    .stat .val { 
+      margin-top: 6px; font-size: 28px; font-weight: 700;
+      background: linear-gradient(135deg, var(--text), var(--primary));
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .panel {
+      grid-column: 1 / -1; background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+      animation: fadeIn 0.4s ease;
+    }
+    .panel:hover {
+      box-shadow: 0 12px 35px rgba(0,0,0,.4), 0 0 0 1px rgba(148,163,184,.08);
+    }
+    .panel + .panel { margin-top: 14px; }
+    .panel-head { display:flex; align-items:center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+    .panel h3 { margin: 0; font-size: 16px; font-weight: 600; }
+
+    .btn { 
+      appearance: none; border: 1px solid var(--border); background: var(--panel); 
+      color: var(--text); border-radius: 10px; padding: 8px 12px; font-weight: 600; 
+      cursor: pointer; transition: all .25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn:hover { 
+      border-color: rgba(124,157,255,.45); 
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(124,157,255,.2);
+    }
+    .btn:active { transform: translateY(0); }
+    .btn.primary { 
+      background: linear-gradient(135deg, var(--primary), var(--primary-strong)); 
+      border-color: transparent;
+      box-shadow: 0 4px 14px rgba(124,157,255,.3);
+    }
+    .btn.primary:hover {
+      box-shadow: 0 6px 20px rgba(124,157,255,.4);
+      transform: translateY(-2px);
+    }
+
+    /* Table */
+    .table-wrap { 
+      overflow: auto; border-radius: 12px; border: 1px solid var(--border);
+      animation: fadeIn 0.5s ease;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: rgba(124,157,255,.06); }
+    th, td { padding: 12px 14px; text-align: left; border-top: 1px solid var(--border); }
+    th { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    tbody tr { 
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    tbody tr:hover { 
+      background: linear-gradient(90deg, rgba(124,157,255,.08), rgba(124,157,255,.04));
+      transform: scale(1.002);
+    }
+    tbody tr:active {
+      transform: scale(0.998);
+    }
+
+    .badge { 
+      padding: 4px 10px; border-radius: 999px; font-size: 12px; 
+      font-weight: 700; letter-spacing: .03em;
+      transition: all 0.2s ease;
+    }
+    .ok { background: rgba(34,197,94,.18); color: #86efac; box-shadow: 0 0 0 1px rgba(34,197,94,.1); }
+    .bad { background: rgba(239,68,68,.18); color: #fecaca; box-shadow: 0 0 0 1px rgba(239,68,68,.1); }
+    .chip { background: rgba(124,157,255,.18); color: #c7d2fe; box-shadow: 0 0 0 1px rgba(124,157,255,.1); }
+
+    /* Code block */
+    .code { 
+      background: linear-gradient(180deg, #0a0f22, #070b18);
+      border: 1px solid var(--border); 
+      border-radius: 12px; padding: 14px; white-space: pre-wrap; 
+      overflow: auto;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.7;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,.3);
+      transition: all 0.3s ease;
+    }
+    .code:hover {
+      box-shadow: inset 0 2px 12px rgba(0,0,0,.4), 0 0 0 1px rgba(124,157,255,.1);
+    }
+    
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: linear-gradient(135deg, rgba(18,26,51,.98), rgba(18,26,51,.92));
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.5);
+      z-index: 200;
+      min-width: 280px;
+      animation: slideIn 0.3s ease;
+      backdrop-filter: blur(12px);
+      transition: all 0.3s ease;
+    }
+    .toast.success { 
+      border-color: rgba(34,197,94,.4); 
+      box-shadow: 0 10px 40px rgba(34,197,94,.2);
+    }
+    .toast.error { 
+      border-color: rgba(239,68,68,.4); 
+      box-shadow: 0 10px 40px rgba(239,68,68,.2);
+    }
+
+    /* Pages */
+    .page { 
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    .page.active { display: block; }
+
+    /* Modal */
+    .modal { 
+      position: fixed; inset: 0; 
+      display: none; align-items: center; justify-content: center; 
+      z-index: 100;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(4px);
+    }
+    .modal.active { 
+      display: flex;
+      animation: fadeIn 0.25s ease;
+    }
+    .modal .sheet {
+      width: min(920px, 92vw); max-height: 90vh; overflow: auto; 
+      padding: 18px; border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(18,26,51,.98), rgba(18,26,51,.92));
+      border: 1px solid var(--border); 
+      box-shadow: 0 20px 60px rgba(0,0,0,.7);
+      animation: slideIn 0.3s ease;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .stat { grid-column: span 6; }
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: fixed; inset: 0 35% 0 0; transform: translateX(-100%); transition: .25s ease; z-index: 60; }
+      .sidebar.open { transform: translateX(0); }
+      .topbar { grid-column: 1 / -1; }
+      .container { padding: 14px; }
+    }
+    @media (max-width: 640px) {
+      .stat { grid-column: 1 / -1; }
+    }
+
+    /* Form elements */
+    input[type="text"], input[type="number"], textarea, select {
+      transition: all 0.25s ease;
+    }
+    input.btn, select.btn { color: var(--text); }
+    textarea.code { color: var(--text); }
+    input.btn::placeholder, textarea.code::placeholder { color: var(--muted); opacity: 0.85; }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: rgba(124,157,255,.5) !important;
+      box-shadow: 0 0 0 3px rgba(124,157,255,.15) !important;
+    }
+    
+    /* Details/Summary */
+    details {
+      transition: all 0.3s ease;
+    }
+    details summary {
+      user-select: none;
+      transition: all 0.2s ease;
+    }
+    details summary:hover {
+      color: var(--primary);
+    }
+    details[open] summary {
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Utility */
+    .sr-only { position: absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <h1>🚀 OptiMAS Server</h1>
+        <p>Server Dashboard</p>
+      </div>
+
+      <nav class="nav sidebar-nav">
+        <a href="#" class="nav-item active" data-page="overview">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/></svg>
+          <span>Overview</span>
+          <span class="kbd">G</span>
+        </a>
+        <a href="#" class="nav-item" data-page="tools">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+          <span>Tools</span>
+          <span class="kbd">T</span>
+        </a>
+        <a href="#" class="nav-item" data-page="history">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+          <span>Call History</span>
+          <span class="kbd">H</span>
+        </a>
+        <a href="#" class="nav-item" data-page="sessions">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
+          <span>Sessions</span>
+          <span class="kbd">S</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span class="dot"></span>
+        <span id="serverStatus">Server Online</span>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main>
+      <header class="topbar">
+        <div class="search" title="Type to filter tools (on Tools page)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+          <input id="tool-search" class="search-bar" placeholder="Search tools, commands, or jump (⌘/Ctrl K)" />
+          <span class="kbd">⌘K</span>
+        </div>
+        <button class="btn" id="toggleSidebar" aria-label="Toggle sidebar">☰</button>
+      </header>
+
+      <div class="container main-content">
+        <!-- Overview -->
+        <section id="page-overview" class="page active">
+          <div class="page-header">
+            <div class="title">Dashboard Overview</div>
+            <div class="desc">Monitor your OptiMAS Server performance and activity</div>
+          </div>
+
+          <div class="grid" style="margin-bottom:16px;">
+            <div class="stat">
+              <small>Active Sessions</small>
+              <div class="val" id="stat-sessions">-</div>
+              <small>of <span id="stat-max-sessions">-</span> max</small>
+            </div>
+            <div class="stat">
+              <small>Total Tools</small>
+              <div class="val" id="stat-tools">-</div>
+              <small>available for use</small>
+            </div>
+            <div class="stat">
+              <small>Tool Calls (Total)</small>
+              <div class="val" id="stat-calls">-</div>
+              <small class="muted">across all sessions</small>
+            </div>
+            <div class="stat">
+              <small>Server Version</small>
+              <div class="val" id="stat-version">v2</div>
+              <small class="muted">OptiMAS Server</small>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Server Information</h3>
+              <button class="btn" onclick="refreshOverview()">🔄 Refresh</button>
+            </div>
+            <div id="server-info"><div style="display:flex;align-items:center;gap:10px;color:var(--muted)"><div class="spinner"></div><span>Loading server info...</span></div></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h3>Recent Activity</h3></div>
+            <div id="recent-activity" class="desc">Loading recent activity…</div>
+          </div>
+        </section>
+
+        <!-- Tools -->
+        <section id="page-tools" class="page">
+          <div class="page-header">
+            <div class="title">Available Tools</div>
+            <div class="desc">Browse all registered MCP tools</div>
+          </div>
+          <div id="tools-list"><div style="display:flex;align-items:center;gap:10px;color:var(--muted)"><div class="spinner"></div><span>Loading tools...</span></div></div>
+        </section>
+
+        <!-- History -->
+        <section id="page-history" class="page">
+          <div class="page-header">
+            <div class="title">Tool Call History</div>
+            <div class="desc">View detailed logs of tool executions</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Tool call source</h3>
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <select id="session-filter" class="btn" style="min-width:min(320px,100%)" onchange="onHistorySourceChange()">
+                  <option value="">— Select server session / workspace trace —</option>
+                </select>
+                <button class="btn" onclick="loadHistoryPage()">🔄 Refresh lists</button>
+                <button class="btn" onclick="loadHistory()">Load</button>
+              </div>
+              <p class="desc" style="margin-top:8px;margin-bottom:0">
+                <strong>Server log</strong>: sessions from JSONL (active + archived). <strong>Workspace</strong>: per-query <code>tool_call/tool_calls.jsonl</code> under the configured workspace root.
+              </p>
+            </div>
+          </div>
+
+          <div id="history-list" class="desc">Select a session or workspace trace, then click Load.</div>
+        </section>
+
+        <!-- Sessions -->
+        <section id="page-sessions" class="page">
+          <div class="page-header">
+            <div class="title">Sessions & Workspaces</div>
+            <div class="desc">Explore session files and workspaces</div>
+          </div>
+          <div id="sessions-list"><div style="display:flex;align-items:center;gap:10px;color:var(--muted)"><div class="spinner"></div><span>Loading sessions...</span></div></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal" id="tool-modal">
+    <div class="sheet">
+      <div class="panel-head">
+        <h3 id="modal-tool-name">Tool Details</h3>
+        <button class="btn" onclick="closeModal()">✕</button>
+      </div>
+      <div id="modal-tool-content"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="call-details-modal">
+    <div class="sheet">
+      <div class="panel-head">
+        <h3 id="modal-call-title">Tool Call Details</h3>
+        <button class="btn" onclick="closeCallDetailsModal()">✕</button>
+      </div>
+      <div id="modal-call-content"></div>
+    </div>
+  </div>
+
+  <script>
+    // === Configuration & state ===
+    const API_BASE = window.location.origin;
+    let currentSession = null;
+    let dashboardSessionId = null;
+
+    // === Boot ===
+    document.addEventListener('DOMContentLoaded', () => {
+      setupNavigation();
+      setupCommandPalette();
+      setupModalCloseHandlers();
+      loadOverview();
+      setInterval(() => {
+        const active = document.querySelector('.page.active')?.id;
+        if (active === 'page-overview') loadOverview();
+      }, 30000);
+
+      // Mobile sidebar toggle
+      document.getElementById('toggleSidebar')?.addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('open');
+      });
+
+      // Escape key to close modals
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeModal();
+          closeCallDetailsModal();
+        }
+      });
+    });
+
+    // === Navigation ===
+    function setupNavigation() {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          const page = item.dataset.page;
+          switchPage(page);
+        });
+      });
+    }
+
+    function switchPage(pageName) {
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.page === pageName));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(`page-${pageName}`).classList.add('active');
+      // Load page data
+      switch(pageName){
+        case 'overview': loadOverview(); break;
+        case 'tools': loadTools(); break;
+        case 'history': loadHistoryPage(); break;
+        case 'sessions': loadSessions(); break;
+      }
+    }
+
+    // === Command palette (⌘/Ctrl + K) ===
+    function setupCommandPalette(){
+      let buffer = '';
+      const searchInput = document.getElementById('tool-search');
+      function openTools(){ switchPage('tools'); searchInput?.focus(); }
+      window.addEventListener('keydown', (e) => {
+        const target = e.target;
+        const tag = (target && target.tagName) ? target.tagName.toUpperCase() : '';
+        const isEditable = (
+          tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' ||
+          (target && target.isContentEditable) ||
+          (typeof target?.closest === 'function' && !!target.closest('input, textarea, select, [contenteditable]'))
+        );
+
+        // Allow Ctrl/Cmd+K globally
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          openTools();
+          return;
+        }
+
+        // Ignore quick navigation when typing in editable fields
+        if (isEditable) return;
+
+        // Quick nav: G/T/H/S (no modifiers)
+        const k = e.key.toLowerCase();
+        if (!e.metaKey && !e.ctrlKey && !e.altKey) {
+          buffer = k;
+          if (k === 'g') switchPage('overview');
+          if (k === 't') openTools();
+          if (k === 'h') switchPage('history');
+          if (k === 's') switchPage('sessions');
+        }
+      });
+    }
+
+    function setupModalCloseHandlers(){
+      setupModalOverlayClose('tool-modal', closeModal);
+      setupModalOverlayClose('call-details-modal', closeCallDetailsModal);
+    }
+
+    function setupModalOverlayClose(id, closeFn){
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      let pointerDownOnOverlay = false;
+      modal.addEventListener('pointerdown', (e) => {
+        pointerDownOnOverlay = e.target === modal;
+      });
+      modal.addEventListener('pointerup', (e) => {
+        if (pointerDownOnOverlay && e.target === modal) {
+          closeFn();
+        }
+        pointerDownOnOverlay = false;
+      });
+      modal.addEventListener('pointerleave', () => {
+        pointerDownOnOverlay = false;
+      });
+      modal.addEventListener('pointercancel', () => {
+        pointerDownOnOverlay = false;
+      });
+    }
+
+    // === Utilities ===
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:18px">${type === 'success' ? '✓' : '✗'}</span>
+          <span style="font-weight:600">${message}</span>
+        </div>`;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function showSpinner(text = 'Loading...') {
+      return `<div style="display:flex;align-items:center;gap:10px;color:var(--muted)">
+        <div class="spinner"></div><span>${text}</span>
+      </div>`;
+    }
+
+    // === API helper ===
+    async function fetchAPI(endpoint, options = {}){
+      try{
+        const url = `${API_BASE}${endpoint}`;
+        const fetchOptions = {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+          }
+        };
+        const res = await fetch(url, fetchOptions);
+        
+        // Try to parse JSON response
+        let result;
+        try {
+          result = await res.json();
+        } catch (jsonError) {
+          // If JSON parsing fails, return error object
+          if (!res.ok) {
+            return {
+              success: false,
+              error: `HTTP ${res.status}: ${res.statusText || 'Unknown error'}`
+            };
+          }
+          throw jsonError;
+        }
+        
+        // If status is not OK, ensure result has success: false
+        if (!res.ok) {
+          return {
+            success: false,
+            error: result.error || result.message || `HTTP ${res.status}: ${res.statusText || 'Unknown error'}`
+          };
+        }
+        
+        return result;
+      }catch(err){ 
+        console.error(`API Error (${endpoint})`, err); 
+        return {
+          success: false,
+          error: err.message || String(err) || 'Unknown error'
+        };
+      }
+    }
+
+    // === Overview ===
+    async function loadOverview(){
+      const health = await fetchAPI('/health');
+
+      if (health){
+        document.getElementById('stat-sessions').textContent = health.session_stats?.total_sessions || 0;
+        document.getElementById('stat-max-sessions').textContent = health.session_stats?.max_sessions || '∞';
+
+        const serverInfo = document.getElementById('server-info');
+        serverInfo.innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+            <div><small class="desc">Version</small><div style="font-weight:700">${health.version || '0.1.0'}</div></div>
+            <div><small class="desc">Server</small><div style="font-weight:700">${health.server || 'OptiMAS Server'}</div></div>
+            <div><small class="desc">MCP Endpoint</small><div style="font-weight:700">${health.mcp_endpoint || '/mcp'}</div></div>
+            <div><small class="desc">Last Updated</small><div style="font-weight:700">${new Date().toLocaleTimeString()}</div></div>
+          </div>`;
+      }
+
+      const tools = await fetchAPI('/api/tools');
+      if (tools?.tools) document.getElementById('stat-tools').textContent = tools.tools.length;
+
+      loadActivitySummary();
+    }
+
+    async function refreshOverview(){ 
+      await loadOverview(); 
+      showToast('Dashboard refreshed', 'success');
+    }
+
+    async function loadActivitySummary(){
+      const sessions = await fetchAPI('/api/sessions');
+      const activityDiv = document.getElementById('recent-activity');
+      if (!sessions?.sessions?.length){ activityDiv.innerHTML = '<span class="desc">No active sessions</span>'; return; }
+
+      let totalCalls = 0; 
+      sessions.sessions.forEach(s => totalCalls += (s.tool_calls||0));
+      document.getElementById('stat-calls').textContent = totalCalls;
+
+      const recent = sessions.sessions.slice(0,5);
+      activityDiv.innerHTML = `
+        <div class="table-wrap"><table>
+          <thead><tr><th>Session ID</th><th>Tool Calls</th><th>Last Active</th><th>Status</th></tr></thead>
+          <tbody>
+            ${recent.map(s=>`<tr>
+              <td><code>${s.session_id ? s.session_id.substring(0,16) + '…' : 'N/A'}</code></td>
+              <td>${s.tool_calls||0}</td>
+              <td>${s.last_accessed?new Date(s.last_accessed).toLocaleString():'N/A'}</td>
+              <td><span class="badge ok">Active</span></td>
+            </tr>`).join('')}
+          </tbody>
+        </table></div>`;
+    }
+
+    // === Tools ===
+    async function loadTools(){
+      const el = document.getElementById('tools-list');
+      const data = await fetchAPI('/api/tools');
+      if (!data?.tools){ el.innerHTML = '<span class="badge bad">Failed to load tools</span>'; return; }
+
+      const searchInput = document.getElementById('tool-search');
+      searchInput.oninput = () => renderTools(filterTools(data.tools, searchInput.value));
+      renderTools(data.tools);
+    }
+
+    function card(tool){
+      const paramCount = Object.keys(tool.inputSchema?.properties||{}).length;
+      return `<div class="panel tool-card" style="padding:14px;cursor:pointer;transition:all 0.3s ease" onclick="showToolDetails('${tool.name}')" onmouseenter="this.style.transform='translateY(-4px) scale(1.01)';this.style.borderColor='rgba(124,157,255,.35)'" onmouseleave="this.style.transform='';this.style.borderColor=''">
+        <div class="panel-head"><h3>${tool.name}</h3><span class="badge chip">Tool</span></div>
+        <div class="desc">${tool.description||'No description'}</div>
+        <div class="desc" style="margin-top:6px;display:flex;align-items:center;gap:6px">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor" style="opacity:0.6"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+          ${paramCount} parameter${paramCount===1?'':'s'}
+        </div>
+      </div>`;
+    }
+
+    function renderTools(tools){
+      const el = document.getElementById('tools-list');
+      el.innerHTML = tools.map(card).join('');
+    }
+
+    function filterTools(tools, q){
+      const s = (q||'').toLowerCase();
+      return tools.filter(t => t.name.toLowerCase().includes(s) || (t.description||'').toLowerCase().includes(s));
+    }
+
+    async function showToolDetails(toolName){
+      const data = await fetchAPI('/api/tools');
+      const tool = data.tools.find(t=>t.name===toolName);
+      if (!tool) return;
+
+      document.getElementById('modal-tool-name').textContent = tool.name;
+      const properties = tool.inputSchema?.properties||{}; const required = tool.inputSchema?.required||[];
+
+      let formHTML = '';
+      if (Object.keys(properties).length){
+        formHTML = `
+          <div class="panel" style="background: var(--panel-2)">
+            <h3 style="margin:0 0 10px 0">🚀 Try This Tool</h3>
+            <form id="tool-execution-form" onsubmit="executeTool(event, '${toolName}')">
+              ${Object.entries(properties).map(([name, schema])=>{
+                const isReq = required.includes(name);
+                const t = schema.type||'string';
+                const desc = schema.description||'';
+                let input = '';
+                if (t==='boolean'){
+                  input = `<select name="${name}" class="btn" ${isReq?'required':''}>
+                    <option value="">-- Select --</option><option value="true">true</option><option value="false">false</option></select>`;
+                } else if (t==='array' || t==='object'){
+                  input = `<textarea name="${name}" class="code" style="min-height:90px" placeholder='${t==='array'?'["item1","item2"]':'{"key":"value"}'}' ${isReq?'required':''}></textarea>`;
+                } else if (t==='integer' || t==='number'){
+                  input = `<input type="number" name="${name}" class="btn" placeholder="Enter ${t}" ${isReq?'required':''}/>`;
+                } else {
+                  const long = /content|text/i.test(desc) || /content/i.test(name);
+                  input = long ? `<textarea name="${name}" class="code" style="min-height:90px" placeholder="Enter ${name}" ${isReq?'required':''}></textarea>` :
+                                  `<input type="text" name="${name}" class="btn" placeholder="Enter ${name}" ${isReq?'required':''}/>`;
+                }
+                return `<div style="margin-bottom:10px">
+                  <label style="display:block;font-weight:600;margin-bottom:6px">${name}${isReq?'<span style="color:var(--danger)">*</span>':''} <span style="color:var(--muted);font-weight:500">(${schema.type})</span></label>
+                  ${input}
+                  ${desc?`<div class="desc" style="margin-top:4px">${desc}</div>`:''}
+                </div>`
+              }).join('')}
+              <div style="margin-top:12px">
+                <button type="submit" class="btn primary" id="execute-btn">▶️ Execute Tool</button>
+              </div>
+            </form>
+            <div id="execution-result" style="display:none"></div>
+          </div>`;
+      }
+
+      document.getElementById('modal-tool-content').innerHTML = `
+        <div class="panel" style="padding:12px">
+          <h3 style="margin:0 0 6px 0;color:#c7d2fe">Description</h3>
+          <div style="white-space: pre-wrap; line-height: 1.6;">${tool.description||'No description available'}</div>
+        </div>
+        ${formHTML}
+        <details class="panel" style="margin-top:12px"><summary style="cursor:pointer;font-weight:700;color:#c7d2fe">📋 View Full Schema</summary>
+          <div class="code" style="margin-top:8px">${JSON.stringify(tool.inputSchema, null, 2)}</div>
+        </details>`;
+
+      document.getElementById('tool-modal').classList.add('active');
+    }
+
+    async function executeTool(event, toolName){
+      event.preventDefault();
+      const form = event.target; const data = new FormData(form);
+      const btn = document.getElementById('execute-btn'); const out = document.getElementById('execution-result');
+
+      const args = {};
+      for (let [k,v] of data.entries()){
+        if (v==='') continue;
+        const el = form.elements[k];
+        if (el.tagName==='TEXTAREA' || v.startsWith('[') || v.startsWith('{')){
+          try { args[k] = JSON.parse(v); } catch { args[k] = v; }
+        } else if (v==='true' || v==='false') { args[k] = v==='true'; }
+        else if (!isNaN(v) && el.type==='number') { args[k] = parseFloat(v); }
+        else { args[k] = v; }
+      }
+
+      btn.disabled = true; btn.textContent = 'Executing…'; out.style.display = 'block';
+      out.innerHTML = `<div class="panel">${showSpinner('Executing tool...')}</div>`;
+      try{
+        const start = Date.now();
+        const headers = { 'Content-Type':'application/json' };
+        if (dashboardSessionId) headers['X-Session-ID'] = dashboardSessionId;
+        const res = await fetch(`${API_BASE}/api/execute-tool`, { method:'POST', headers, body: JSON.stringify({ tool_name: toolName, arguments: args })});
+        const duration = Date.now() - start; const result = await res.json();
+        if (result.session_id) dashboardSessionId = result.session_id;
+        const success = result.success !== false;
+        const jsonText = JSON.stringify(result, null, 2);
+        const safeText = jsonText
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\\n/g, '\n');
+        out.innerHTML = `<div class="panel">
+          <div class="panel-head"><div class="badge ${success?'ok':'bad'}">${success?'Success':'Failed'}</div><span class="desc">${duration}ms</span></div>
+          <div class="code">${safeText}</div>
+          ${dashboardSessionId?`<div class="desc" style="margin-top:6px">Session: ${dashboardSessionId.substring(0,8)}…</div>`:''}
+        </div>`;
+        showToast(success ? `Tool executed successfully in ${duration}ms` : 'Tool execution failed', success ? 'success' : 'error');
+      } catch (e){
+        const errText = JSON.stringify({ error: e.message }, null, 2)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\\n/g, '\n');
+        out.innerHTML = `<div class="panel"><div class="badge bad">Error</div><div class="code">${errText}</div></div>`;
+        showToast('Execution error: ' + e.message, 'error');
+      } finally { btn.disabled = false; btn.textContent = '▶️ Execute Tool'; }
+    }
+
+    function closeModal(){ document.getElementById('tool-modal').classList.remove('active'); }
+    function closeCallDetailsModal(){ document.getElementById('call-details-modal').classList.remove('active'); }
+
+    // === History ===
+    function onHistorySourceChange(){
+      /* optional: auto-load on select */
+    }
+
+    async function loadHistoryPage(){
+      const sel = document.getElementById('session-filter');
+      sel.innerHTML = '<option value="">— Loading… —</option>';
+      try {
+        const [sessions, traces] = await Promise.all([
+          fetchAPI('/api/sessions'),
+          fetchAPI('/api/workspace-traces'),
+        ]);
+        const traceList = (traces?.traces && traces.traces.length) ? traces.traces : [];
+
+        let opts = '<option value="">— Select server session / workspace trace —</option>';
+        if (sessions?.sessions?.length){
+          opts += '<optgroup label="Server log (session_id)">';
+          sessions.sessions.forEach(s => {
+            const badge = s.active !== false ? '🟢' : '📁';
+            const lab = s.active !== false ? 'active' : 'archived';
+            opts += `<option value="session:${encodeURIComponent(s.session_id)}">${badge} [${lab}] ${(s.session_id||'').substring(0,20)}… — ${s.tool_calls||0} calls</option>`;
+          });
+          opts += '</optgroup>';
+
+          const withWsLog = sessions.sessions.filter(s => s.tool_calls_log);
+          if (withWsLog.length){
+            opts += '<optgroup label="Session workspace (tool_call/tool_calls.jsonl)">';
+            withWsLog.forEach(s => {
+              const rp = s.tool_calls_log;
+              opts += `<option value="ws:${encodeURIComponent(rp)}">🗂️ ${(s.task_id||'task').substring(0,24)} — ${rp}</option>`;
+            });
+            opts += '</optgroup>';
+          }
+        }
+        const linkedLogs = new Set(
+          (sessions?.sessions || []).map(s => s.tool_calls_log).filter(Boolean)
+        );
+        const traceFiltered = traceList.filter(t => !linkedLogs.has(t.relative_path)).slice(0, 600);
+        if (traceFiltered.length){
+          opts += '<optgroup label="Workspace scan (recent runs, newest first)">';
+          traceFiltered.forEach(t => {
+            const rp = t.relative_path;
+            opts += `<option value="ws:${encodeURIComponent(rp)}">📄 ${t.label || ''} — ${t.call_count} calls — ${rp}</option>`;
+          });
+          opts += '</optgroup>';
+        } else if (!sessions?.sessions?.some(s => s.tool_calls_log)) {
+          opts += '<optgroup label="Workspace scan">'
+            + '<option disabled>No tool_calls.jsonl found under workspace root (check server workspace.path).</option>'
+            + '</optgroup>';
+        }
+        sel.innerHTML = opts;
+      } catch (e) {
+        sel.innerHTML = '<option value="">— Error loading —</option>';
+        showToast('Failed to load sessions/traces: ' + e.message, 'error');
+      }
+    }
+
+    async function loadHistory(){
+      const raw = document.getElementById('session-filter').value;
+      const wrap = document.getElementById('history-list');
+      if (!raw){ wrap.innerHTML = '<span class="desc">Please select a session or workspace trace.</span>'; return; }
+      wrap.innerHTML = showSpinner('Loading call history...');
+      let url = '/api/history?limit=500';
+      if (raw.startsWith('session:')){
+        const sid = decodeURIComponent(raw.slice('session:'.length));
+        url += `&session_id=${encodeURIComponent(sid)}`;
+      } else if (raw.startsWith('ws:')){
+        const wlog = decodeURIComponent(raw.slice('ws:'.length));
+        url += `&workspace_log=${encodeURIComponent(wlog)}`;
+      } else {
+        wrap.innerHTML = '<span class="desc">Invalid selection</span>';
+        return;
+      }
+      const data = await fetchAPI(url);
+      if (!data?.calls?.length){ wrap.innerHTML = '<span class="desc">No call history for this source</span>'; return; }
+      window.currentCallsData = data.calls;
+      const src = data.source === 'workspace_file' ? `Workspace: <code>${data.workspace_log || ''}</code>` : `Session: <code>${data.session_id || ''}</code>`;
+      wrap.innerHTML = `
+        <div style="margin-bottom:12px;padding:8px;background:var(--bg-secondary);border-radius:6px;">
+          <small class="desc">Source:</small> ${src}<br/>
+          <small class="desc">Total Calls:</small> <strong>${data.count}</strong>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Tool Name</th><th>Status</th><th>Duration</th><th>Timestamp</th></tr></thead>
+          <tbody>${data.calls.map((c,i)=>`<tr class="clickable" onclick="showCallDetails(${i})" style="cursor:pointer">
+            <td><code>${c.tool_name}</code></td>
+            <td>${c.success?'<span class="badge ok">Success</span>':'<span class="badge bad">Failed</span>'}</td>
+            <td>${(typeof c.duration_ms === 'number' && Number.isFinite(c.duration_ms)) ? c.duration_ms.toFixed(2) + 'ms' : '—'}</td>
+            <td>${new Date(c.timestamp).toLocaleString()}</td>
+          </tr>`).join('')}</tbody>
+        </table></div>`;
+    }
+
+    function showCallDetails(i){
+      const call = window.currentCallsData?.[i]; if (!call) return;
+      const title = document.getElementById('modal-call-title'); const body = document.getElementById('modal-call-content');
+      title.textContent = `${call.tool_name} — Call Details`;
+      let html = `
+        <div class="panel"><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+          <div><small class="desc">Status</small><div style="margin-top:6px">${call.success?'<span class="badge ok">Success</span>':'<span class="badge bad">Failed</span>'}</div></div>
+          <div><small class="desc">Duration</small><div style="font-weight:700;margin-top:6px">${(typeof call.duration_ms === 'number' && Number.isFinite(call.duration_ms)) ? call.duration_ms.toFixed(2) + 'ms' : '—'}</div></div>
+          <div><small class="desc">Timestamp</small><div style="font-weight:700;margin-top:6px">${new Date(call.timestamp).toLocaleString()}</div></div>
+        </div></div>`;
+      if (call.arguments && Object.keys(call.arguments).length){
+        html += `<div class="panel"><h3>📥 Input Arguments</h3><div class="code">${JSON.stringify(call.arguments,null,2)}</div></div>`;
+      }
+      if (call.result !== null && call.result !== undefined){
+        // Format result for display
+        let resultDisplay;
+        if (typeof call.result === 'string') {
+          // Try to parse as JSON, if fails, display as-is
+          try {
+            const parsed = JSON.parse(call.result);
+            resultDisplay = JSON.stringify(parsed, null, 2);
+          } catch {
+            resultDisplay = call.result;
+          }
+        } else {
+          // Already an object/array, stringify it
+          resultDisplay = JSON.stringify(call.result, null, 2);
+        }
+        html += `<div class="panel"><h3>📤 Output Result</h3><div class="code">${resultDisplay.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div></div>`;
+      }
+      if (!call.success && call.error){
+        html += `<div class="panel"><h3>❌ Error Details</h3><div class="code">${typeof call.error==='string'?call.error:JSON.stringify(call.error,null,2)}</div></div>`;
+      }
+      body.innerHTML = html; document.getElementById('call-details-modal').classList.add('active');
+    }
+
+    // === Sessions ===
+    async function loadSessions(){
+      const el = document.getElementById('sessions-list');
+      const data = await fetchAPI('/api/sessions');
+      if (!data?.sessions?.length){ el.innerHTML = '<span class="desc">No sessions found</span>'; return; }
+      
+      let html = data.sessions.map(s=>{
+        const isActive = s.active !== false;
+        const tcp = s.tool_calls_log
+          ? `<div><small class="desc">Tool call log (dashboard)</small><div><code style="font-size:0.8em;word-break:break-all">${s.tool_calls_log}</code></div></div>`
+          : '';
+        return `<div class="panel">
+        <div class="panel-head">
+          <h3>Session: ${s.session_id ? s.session_id.substring(0,16) + '…' : 'N/A'}</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="badge ${isActive?'ok':'chip'}">${isActive ? '🟢 Active' : '📁 Archived (log only)'}</span>
+            <span class="badge chip">${s.tool_calls||0} calls</span>
+            ${isActive ? `<button class="btn" style="background:var(--danger);padding:6px 12px;font-size:12px" onclick="killSession('${s.session_id}')" title="Kill this session">🗑️ Kill</button>` : ''}
+          </div>
+        </div>
+        <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+          <div><small class="desc">Workspace Path</small><div><code style="font-size:0.85em;word-break:break-all">${s.workspace_path||'N/A'}</code></div></div>
+          ${tcp}
+          <div><small class="desc">Task ID</small><div>${s.task_id||'N/A'}</div></div>
+          <div><small class="desc">Created</small><div>${s.created_at?new Date(s.created_at).toLocaleString():'N/A'}</div></div>
+          <div><small class="desc">Last Active</small><div>${s.last_accessed?new Date(s.last_accessed).toLocaleString():'N/A'}</div></div>
+        </div>
+      </div>`;
+      }).join('');
+      
+      el.innerHTML = html;
+    }
+
+    // === Kill Session ===
+    async function killSession(sessionId){
+      if (!confirm(`Are you sure you want to kill session ${sessionId.substring(0,16)}…?\n\nThis will close the session and remove it from active sessions.`)){
+        return;
+      }
+      
+      try {
+        const result = await fetchAPI(`/api/sessions/${sessionId}`, {
+          method: 'DELETE'
+        });
+        
+        if (result.success){
+          showToast('Session killed successfully', 'success');
+          loadSessions();
+        } else {
+          showToast(result.error || 'Failed to kill session', 'error');
+        }
+      } catch (error) {
+        console.error('Error killing session:', error);
+        showToast('Error killing session: ' + (error.message || String(error)), 'error');
+      }
+    }
+  </script>
+</body>
+</html>

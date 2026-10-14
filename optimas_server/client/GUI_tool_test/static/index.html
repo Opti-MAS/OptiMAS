@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Tool Dashboard</title>
+    <!-- Icons and Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="ri-hammer-fill"></i>
+                    <span>MCP Console</span>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="ri-search-line search-icon"></i>
+                    <input type="text" id="toolSearch" placeholder="Quick search tools..." spellcheck="false">
+                </div>
+            </div>
+
+            <div class="tool-list" id="toolList">
+                <div class="loading">
+                    <i class="ri-loader-4-line ri-spin"></i> Loading...
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="top-bar-left">
+                    <div class="breadcrumb">
+                        <i class="ri-home-4-line"></i> / 
+                        <span id="breadcrumb-tab">Tools</span> / 
+                        <span id="breadcrumb-tool" class="current">Overview</span>
+                    </div>
+                </div>
+                <div class="top-bar-right">
+                    <button id="themeToggle" class="theme-toggle" title="Toggle Theme">
+                        <i class="ri-moon-line" id="themeIcon"></i>
+                    </button>
+                    <div id="statusIndicator" title="Server Status">
+                        <i class="ri-checkbox-circle-fill" style="color: var(--success)"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content-body">
+                <!-- Navigation Tabs -->
+                <nav class="tab-nav">
+                    <button class="tab-btn active" data-tab="list">
+                        <i class="ri-layout-grid-line"></i> Tools Grid
+                    </button>
+                    <button class="tab-btn" data-tab="schema">
+                        <i class="ri-code-s-slash-line"></i> Schema
+                    </button>
+                    <button class="tab-btn" data-tab="tester">
+                        <i class="ri-play-circle-line"></i> Tester
+                    </button>
+                </nav>
+
+                <!-- Tab Panels -->
+                <div id="tab-list" class="tab-panel active">
+                    <div class="section-header">
+                        <div class="section-header-left">
+                            <h2>Explore Tools</h2>
+                            <p>Select an MCP tool to view its schema or test its functionality.</p>
+                        </div>
+                        <div class="section-header-right">
+                            <div class="view-toggle" id="viewToggle">
+                                <button class="view-toggle-btn active" data-view="list" title="List view">
+                                    <i class="ri-list-unordered"></i>
+                                </button>
+                                <button class="view-toggle-btn" data-view="grid" title="Grid view">
+                                    <i class="ri-layout-grid-line"></i>
+                                </button>
+                            </div>
+                            <div class="tool-count-badge" id="toolCount">
+                                0 Tools
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tools-grid" id="toolsGrid">
+                        <!-- Tools will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Schema View -->
+                <div id="tab-schema" class="tab-panel">
+                    <div class="card-panel" style="height: calc(100vh - 250px);">
+                        <div class="panel-title">
+                            <span><i class="ri-file-code-line"></i> Tool Definition Schema</span>
+                            <div class="panel-actions">
+                                <button class="action-btn" id="copySchema" style="background: none; color: var(--text-muted); border: 1px solid var(--border);">
+                                    <i class="ri-file-copy-line"></i> Copy JSON
+                                </button>
+                            </div>
+                        </div>
+                        <div class="panel-content" id="schemaViewer">
+                            <div class="empty-state" style="text-align: center; padding: 100px 0; color: var(--text-muted);">
+                                <i class="ri-arrow-left-line" style="font-size: 3rem; display: block; margin-bottom: 16px;"></i>
+                                <p>Select a tool from the sidebar to view its structure</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tool Tester -->
+                <div id="tab-tester" class="tab-panel">
+                    <div class="split-layout">
+                        <!-- Left: Form -->
+                        <div class="card-panel">
+                            <div class="panel-title">
+                                <span><i class="ri-equalizer-line"></i> Configuration</span>
+                                <span class="selected-tool-name" id="selectedToolNameTester" style="font-size: 0.75rem; background: var(--primary-light); color: var(--primary); padding: 2px 8px; border-radius: 4px;">No Tool Selected</span>
+                            </div>
+                            <div class="panel-content" id="formContainer">
+                                <div class="empty-state" style="text-align: center; padding: 60px 0; color: var(--text-muted);">
+                                    <i class="ri-mouse-line" style="font-size: 2rem; display: block; margin-bottom: 12px;"></i>
+                                    <p>Select a tool to configure</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Right: Result -->
+                        <div class="card-panel">
+                            <div class="panel-title">
+                                <span><i class="ri-terminal-box-line"></i> Execution Result</span>
+                                <button class="action-btn" id="copyResult" style="background: none; color: var(--text-muted); border: 1px solid var(--border); padding: 4px 8px; font-size: 0.75rem;">
+                                    <i class="ri-clipboard-line"></i> Copy
+                                </button>
+                            </div>
+                            <div class="panel-content" id="resultContainer">
+                                <div class="empty-state" style="text-align: center; padding: 60px 0; color: var(--text-muted);">
+                                    <p>Results will be displayed here after execution</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <i class="ri-information-line" id="toastIcon"></i>
+        <span id="toastMessage"></span>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

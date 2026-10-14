@@ -1,0 +1,64 @@
+# Model Configurations
+# Maps model names to their LLM implementation class.
+# Each model can specify a class name and optional default parameters.
+
+models:
+  # OpenAI models
+  gpt-4:
+    class: "OpenAILLM"
+  gpt-4o:
+    class: "OpenAILLM"
+  gpt-4o-mini:
+    class: "OpenAILLM"
+  gpt-3.5-turbo:
+    class: "OpenAILLM"
+  gpt-5:
+    class: "OpenAILLM"
+  gpt-5-mini:
+    class: "OpenAILLM"
+  gpt-5.1-codex:
+    class: "OpenAILLM"
+  gpt-5.2:
+    class: "OpenAILLM"
+  gpt-5-nano:
+    class: "OpenAILLM"
+  
+  # Anthropic backbones are not wired up in this release; see
+  # optimas_client/src/llm/factory.py for how to register a new provider.
+
+  # Gemini 3 models
+  gemini-3-pro-preview:
+    class: "GeminiLLM"
+  gemini-3-flash-preview:
+    class: "GeminiLLM"
+  gemini-3-pro-preview-fc:
+    class: "GeminiLLM"
+  gemini-3-flash-preview-fc:
+    class: "GeminiLLM"
+  gemini-3.1-pro-preview:
+    class: "GeminiLLM"
+  gemini-3.1-pro-preview-thinking:
+    class: "GeminiLLM"
+  gemini-3-flash-preview-thinking:
+    class: "GeminiLLM"
+    fallbacks:
+      - "gemini-3-flash-preview"
+
+  # GLM
+  glm-4.7:
+    class: "OpenAILLM"
+  GLM-4.6V-Flash:
+    class: "OpenAILLM"
+
+  # Qwen
+  qwen-plus:
+    class: "OpenAILLM"
+  qwen3-72b-instruct:
+    class: "OpenAILLM"
+  # sglang convention: capitalize first letter
+  Qwen3.5-35B-A3B:
+    class: "OpenAILLM"
+  Qwen3.6-35B-A3B:
+    class: "OpenAILLM"
+  mimo-v2-flash:
+    class: "OpenAILLM"

@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "optimas"
+version = "0.1.0"
+description = "OptiMAS – Optimizing Multi-Agent Systems through automated evolution"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "OptiMAS Contributors"},
+]
+keywords = ["multi-agent", "llm", "optimization", "mcp", "evolution"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "openai>=1.0.0",
+    "fastmcp>=2.14.7,<3",
+    "mcp>=1.0.0",
+    "uvicorn[standard]>=0.30.0",
+    "fastapi>=0.115.0",
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0.0",
+    "aiofiles>=23.0.0",
+    "requests>=2.31.0",
+    "httpx>=0.27.0",
+    "rich>=13.0.0",
+    "typing-extensions>=4.0.0",
+    "pdfplumber>=0.10.0",
+    "python-docx>=1.0.0",
+    "python-pptx>=1.0.0",
+    "openpyxl>=3.1.0",
+    "beautifulsoup4>=4.12.0",
+    "pandas>=2.1,<3",
+    "langchain>=0.3,<0.4",
+    "pillow>=10.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.4.0",
+]
+
+[project.scripts]
+optimas-train = "optimas_client.cli.train:main"
+optimas-test = "optimas_client.cli.test:main"
+
+[project.urls]
+Homepage = "https://github.com/Opti-MAS/OptiMAS"
+Repository = "https://github.com/Opti-MAS/OptiMAS"
+Issues = "https://github.com/Opti-MAS/OptiMAS/issues"
+
+[tool.setuptools.packages.find]
+include = ["optimas_client*", "optimas_server*"]
+exclude = ["optimas_server.workbench*"]
+
+[tool.setuptools.package-data]
+optimas_client = ["config/**/*.yaml", "config/**/*.md", "prompts/**/*.md", "prompts/**/*.txt", "data/*.jsonl"]
+optimas_server = ["config.yaml", "dashboard/*.html", "client/GUI_tool_test/static/*", "docs/*.md", "THIRD_PARTY_NOTICE.md"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

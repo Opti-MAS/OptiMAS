@@ -1,0 +1,11 @@
+Question: ${question}
+
+Please answer the question based on the content above. If you need more information from other parts of the file, you MUST call the read_next_chunk tool. Otherwise, provide a complete answer.
+
+---
+History progress:
+${history_summary}
+
+---
+File content (${chunk_progress}):
+${chunk_content}

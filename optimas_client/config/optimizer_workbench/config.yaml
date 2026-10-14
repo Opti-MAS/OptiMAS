@@ -1,0 +1,85 @@
+# Optimizer Config
+optimizer:
+  benchmark_name: "workbench"
+  config_source: "optimas_client/config/mas_workbench"
+  benchmark:
+    name: "workbench"
+    train_dataset_file_path: "optimas_client/data/workbench_train.jsonl"
+    val_dataset_file_path: "optimas_client/data/workbench_val.jsonl"
+    test_dataset_file_path: "optimas_client/data/workbench_test.jsonl"
+    evaluation_mode: "state"           # Official WorkBench state-based evaluator
+
+# Agent configuration list
+agents:
+  - agent_name: "optimizer"
+    subagent: []  # Sub-agents this agent can delegate to; empty means no delegation
+    llm_config:
+      model_name: "gpt-4o"
+      max_retries: 5
+    internal_tools_llm_config:
+      model_name: "gpt-4o"
+      extra_base_urls: []
+      max_retries: 5
+    vlm_config:
+      model_name: "gpt-4o"
+      max_retries: 3
+    max_iterations: 50  # Max iterations per phase (Optimizer needs more to manage the full evolution)
+    max_real_iterations: 600  # Overall max iterations (not reset on phase_done)
+
+    text_qa_chunk_chars: 20000
+    context_soft_limit_chars: 240000
+    context_hard_limit_chars: 250000
+    context_must_limit_chars: 260000
+    max_tool_result_chars_for_context: 20000
+    todo_file_path: "optimizer/todo.md"
+
+    prompt_dict:
+      system: "./prompts/system.md"
+      initial_message: "./prompts/initial_message.md"
+      backward_pass: "./prompts/backward_pass.md"
+    skill_dir: "./skills"
+    # ────────────────────────────────────────────────────────────────────────
+    # Skill catalog. Skills are partitioned into three layers:
+    #
+    #   system_skills   — inlined into the system prompt (always visible).
+    #                     Keep short and FOUNDATIONAL — workspace conventions,
+    #                     todo discipline. Domain-NEUTRAL only.
+    #
+    #   preload_skills  — full body injected into the initial user message and
+    #                     re-injected after every phase_done_and_summarize.
+    #                     Use for behaviour that must persist across phases but
+    #                     does not justify burning system-prompt tokens.
+    #                     Domain-NEUTRAL only.
+    #
+    #   optional_skills — loaded on demand via `load_skill(<name>)`. Add freely;
+    #                     they are nearly free until used.
+    #                     - Universal optimizer skills (always include).
+    #                     - Domain packs (opt-in; none ship by default).
+    # ────────────────────────────────────────────────────────────────────────
+    system_skills: ["manage-todo", "handle-workspace"]
+    preload_skills: ["hypothesis-ledger", "phase-transition"]
+    optional_skills:
+      # Universal optimizer machinery (domain-agnostic — keep all loaded)
+      - "hypothesis-ledger"
+      - "phase-transition"
+      - "trajectory-analysis"
+      - "optimizer-skill-design"
+      - "optimizer-toolkits"
+      - "optimizer-mas-evolve"
+      - "optimizer-create-subagent"
+      # Domain packs are opt-in: drop a `domain-<name>/SKILL.md` into `./skills`
+      # and list its name here to give the optimizer task-family knowledge.
+      # None ship by default — OptiMAS is evaluated task-agnostically.
+    available_tools:
+      - "read_file"
+      - "write_file"
+      - "file_edit"
+      - "grep_file_content"
+      - "list_file_tree"
+      - "load_skill"
+      - "task_done"
+      - "phase_done_and_summarize"
+      - "text_qa"
+      - "text_extract"
+      - "image_qa"
+      - "finalize_optimization"

@@ -1,0 +1,4 @@
+DOCUMENT CONTENT:
+${content}
+
+TASK REQUIREMENTS: ${task}
